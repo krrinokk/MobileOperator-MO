@@ -1,0 +1,88 @@
+.frame1 {
+    background-color: rgba(255, 255, 255, 1);
+    padding: 0 0 165px;
+  }
+  .rectangle6 {
+    width: 428px;
+    height: 761px;
+    background-color: rgba(111, 75, 204, 1);
+    border-radius: 84px;
+    position: relative;
+  }
+  .rectangle7 {
+    width: 302px;
+    height: 53px;
+    background-color: rgba(255, 255, 255, 1);
+    border-radius: 20px;
+    position: absolute;
+    left: 50px;
+    bottom: 428px;
+  }
+  .rectangle8 {
+    width: 302px;
+    height: 53px;
+    background-color: rgba(255, 255, 255, 1);
+    border-radius: 20px;
+    position: absolute;
+    left: 50px;
+    bottom: 311px;
+  }
+  .login {
+    font-family: "Inter";
+    font-size: 30px;
+    font-weight: 700;
+    line-height: normal;
+    color: rgba(255, 255, 255, 1);
+    position: absolute;
+    left: 54px;
+    top: 400px;
+  }
+  .parol {
+    font-family: "Inter";
+    font-size: 30px;
+    font-weight: 700;
+    line-height: normal;
+    color: rgba(255, 255, 255, 1);
+    position: absolute;
+    left: 50px;
+    bottom: 378px;
+  }
+  .mobileOperator {
+    font-family: "Inter";
+    font-size: 38px;
+    font-weight: 800;
+    line-height: normal;
+    color: rgba(255, 255, 255, 1);
+    position: absolute;
+    left: 29px;
+    top: 114px;
+  }
+  .rectangle9 {
+    width: 428px;
+    height: 79px;
+    background-color: rgba(111, 75, 204, 1);
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .vojti {
+    font-family: "Inter";
+    font-size: 30px;
+    font-weight: 700;
+    line-height: normal;
+    color: rgba(255, 255, 255, 1);
+    position: absolute;
+    left: 160px;
+    bottom: 215px;
+  }
+  .forOperators {
+    font-family: "Inter";
+    font-size: 28px;
+    font-weight: 600;
+    line-height: normal;
+    color: rgba(255, 255, 255, 1);
+    font-style: italic;
+    position: absolute;
+    left: 124px;
+    top: 151px;
+  }
