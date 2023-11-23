@@ -15,7 +15,7 @@ const handleReturnToTarif = () => {
     navigation.navigate("Client");
   };
   const handleReturnToHome = () => {
-    navigation.navigate("Home");
+    navigation.navigate("Home", { login });
   };
 
 const Menu = ({ navigation, currentDate, handleReturnToLogin, handleReturnToTarif, handleReturnToDogovor, handleReturnToClient, handleReturnToHome }) => {
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   dogovoraTwo: {
     height: 20,
-    width: 62,
+    width: 75,
     fontFamily: "Open Sans",
     fontSize: 14,
     fontWeight: "800",

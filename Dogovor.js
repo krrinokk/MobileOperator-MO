@@ -1,12 +1,24 @@
 import React, { useState } from "react";
-import { View, Text, Image,TouchableOpacity } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import moment from "moment";
 import 'moment/locale/ru';
 import Menu from "./Menu";
-import { useNavigation } from '@react-navigation/native'; 
+import { Card } from 'react-native-elements';
 
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const Dogovor = () => {
+  const route = useRoute(); // use useRoute hook to get access to route object
+  const { login } = route.params || {};
+  const [cardData, setCardData] = useState([
+    {
+      isEditing: false,
+   
+    },
+  ]);
+ 
+  const [cardCount, setCardCount] = useState(1); // State to track the number of cards
+  const [isEditing, setIsEditing] = useState(false); // State to track editing mode 
   moment.locale('ru');
   const currentDate = moment().format("DD MMMM YYYY [год], H:mm");
 const navigation = useNavigation();
@@ -23,7 +35,28 @@ const navigation = useNavigation();
         navigation.navigate("AddDogovor"); 
       };
       const handleReturnToHome = () => {
-        navigation.navigate("Home");
+        navigation.navigate("Home", { login });
+      };
+      const handleRedactirovatClick = (index) => {
+        const updatedCardData = [...cardData];
+        updatedCardData[index].isEditing = !updatedCardData[index].isEditing;
+        setCardData(updatedCardData);
+      };
+      const handleDeleteClick = (index) => {
+        setCardData((prevCardData) => {
+          const updatedCardData = [...prevCardData];
+          updatedCardData.splice(index, 1); // Remove the card at the specified index
+          return updatedCardData;
+        });
+      };
+      const handleAddClick = () => {
+        const newCard = {
+          isEditing: true, // Set isEditing to true for the newly added card
+       
+        };
+      
+        setCardData((prevCardData) => [newCard, ...prevCardData]);
+        setCardCount(cardCount + 1);
       };
       
   return (
@@ -43,27 +76,9 @@ const navigation = useNavigation();
               Открыть новый тарифный план
             </Text>
             <View style={styles.rectangle25} />
-            <View style={styles.rectangle37} />
-            <Image
-              source={{
-                uri: "https://static.overlay-tech.com/assets/99d3420a-42df-4f4e-a657-968c749a8822.png"
-              }}
-              style={styles.image6}
-            />
-            <Text style={styles.dataZakljuchenija}>
-              дата заключения
-            </Text>
-            <Text style={styles.num77686}>
-              &#43;7***-***-***
-            </Text>
-       
-            <Text style={styles.nomerKlienta}>
-              номер клиента
-            </Text>
-   
-            <Text style={styles.num999}>№</Text>
-           
           
+       
+       
            
             
            
@@ -80,14 +95,84 @@ const navigation = useNavigation();
         />
       </View>
       
-          
+      <View style={styles.cardForContainer}>
+            <ScrollView style={styles.cardScrollView} contentContainerStyle={styles.cardScrollContainer}>
+            {cardData.map((card, index) => (
+                <Card containerStyle={styles.cardContainer}>
+              <TouchableOpacity onPress={() => handleRedactirovatClick(index)}>
+          <Image
+            style={styles.redactirovat}
+            source={{ uri: "https://ltdfoto.ru/images/2023/11/21/REDAKTIROVAT.png" }}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleDeleteClick(index)}>
+              <Image
+                style={styles.delete}
+                source={{ uri: "https://i.ibb.co/SVmDTwG/pngwing-com-8.png" }}
+              />
+            </TouchableOpacity>
+
+<Text style={styles.dataZakljuchenija}>
+              дата заключения
+            </Text>
+            {/* <Text style={styles.num77686}>
+              &#43;7***-***-***
+            </Text> */}
+       
+            <Text style={styles.nomerKlienta}>
+              номер клиента
+            </Text>
+   
+            <Text style={styles.num999}>№</Text>
             <Text style={styles.simCard}>SIM-Card</Text>
     
             <Text style={styles.nomerTarifa}>
               номер тарифа
             </Text>
+
+            {card.isEditing ? (
+          
+                  <>
+                  <TextInput
+                    style={styles.inputdataZakljuchenija}
+             
+                    onBlur={() => setIsEditing(false)}
+                  />
+                  <TextInput
+                    style={styles.inputnum77686}
+                   
+                    onBlur={() => setIsEditing(false)}
+                  />
+                    <TextInput
+                    style={styles.inputnum999}
+                   
+                    onBlur={() => setIsEditing(false)}
+                  />
+                    <TextInput
+                    style={styles.inputnomerTarifa}
+                   
+                    onBlur={() => setIsEditing(false)}
+                  />
+                        <TextInput
+                    style={styles.inputnomerKlienta}
+                   
+                    onBlur={() => setIsEditing(false)}
+                  />
+                      <TextInput
+                    style={styles.inputsimCard}
+                   
+                    onBlur={() => setIsEditing(false)}
+                  />
+         </>
+        ) : null}
+      </Card>
+        ))}
+              </ScrollView>
+              </View>    
+           
+         
             <View style={styles.rectangle26} />
-            <TouchableOpacity style={styles.dobavit} onPress={handleOpenAddDogovor}>
+            <TouchableOpacity style={styles.dobavit} onPress={handleAddClick}>
           <Text style={styles.text}>Добавить</Text>
         </TouchableOpacity>
             <View style={styles.clockSolid1} />
@@ -103,6 +188,149 @@ const navigation = useNavigation();
   );
 };
 const styles = {
+  delete: {
+    width: 45,
+    height: 45,
+    position: "absolute",
+    left: 265,
+    top: 380,
+  },
+  inputdataZakljuchenija: {
+    height: 40,
+    width: 105,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    right: 210,
+      top: 65,
+  },
+  inputnomerKlienta: {
+    height: 40,
+    width: 90,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    right: 225,
+    top: 185,
+  },
+  inputnomerTarifa: {
+    height: 40,
+    width: 95,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    right: 220,
+    top: 330,
+  },
+  inputsimCard: {
+    height: 40,
+    width: 120,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    right: 195,
+    top: 260,
+  },
+  inputnum77686: {
+    height: 40,
+    width: 250,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    left: 33,
+      top: 126,
+  },
+  inputnum999: {
+    height: 40,
+    width: 100,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    left: 65,
+    top: 0,
+  },
+  redactirovat: {
+    width: 45,
+    height: 45,
+    position: "absolute",
+    left: 255,
+    top: 0,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContainer: {
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  cardForContainer: {
+    width: 400,
+    height: 525,
+    position: 'absolute',
+    left: 0,
+    top: 250,
+  
+   
+  },
+  cardScrollView: {
+    flex: 1,
+  },
+  cardScrollContainer: {
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  cardContainer: {
+  
+    width: 350,
+  
+    height: 470,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 20,
+    borderWidth: 6,
+    borderColor: 'rgba(246, 246, 246, 1)',
+  },
     menuContainer: {
         position: "absolute",
         left: 0,
@@ -263,8 +491,8 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: 51,
-      top: 382,
+      right: -30,
+      top: 65,
     },
     num77686: {
       height: 36,
@@ -277,7 +505,7 @@ const styles = {
       display: "flex",
       position: "absolute",
       left: 33,
-      top: 446,
+      top: 296,
     },
     num34: {
       height: 36,
@@ -302,8 +530,8 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: 82,
-      bottom: 393,
+      right: -33,
+      top: 185,
     },
     num77634349: {
       height: 36,
@@ -333,7 +561,7 @@ const styles = {
     },
     num999: {
       height: 36,
-      width: 276,
+      width: 46,
       fontFamily: "Open Sans",
       fontSize: 36,
       fontWeight: 800,
@@ -341,8 +569,8 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      left: 38,
-      top: 301,
+      left: 10,
+      top: 0,
     },
     vector: {
       width: "10%",
@@ -423,8 +651,8 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: 17,
-      bottom: 317,
+      right: -60,
+      top: 260,
     },
     num34Two: {
       height: 36,
@@ -449,8 +677,8 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: 76,
-      bottom: 249,
+      right: -30,
+      top: 330,
     },
     rectangle26: {
       width: 33,

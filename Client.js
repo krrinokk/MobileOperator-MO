@@ -1,13 +1,23 @@
-import React from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import moment from "moment";
 import 'moment/locale/ru';
 import Menu from "./Menu";
+import { Card } from 'react-native-elements';
 
 moment.locale('ru');
 const currentDate = moment().format("DD MMMM YYYY [год], H:mm");
 
 const Client = ({ navigation }) => {
+  const [cardData, setCardData] = useState([
+    {
+      isEditing: false,
+
+    },
+  ]);
+  const [isEditing, setIsEditing] = useState(false); // State to track editing mode 
+  const [cardCount, setCardCount] = useState(1); // State to track the number of cards
+
   const handleReturnToTarif = () => {
     navigation.navigate("Tarif");
   };
@@ -22,6 +32,30 @@ const Client = ({ navigation }) => {
   };
   const handleReturnToFrame2 = () => {
     navigation.navigate("Frame2");
+  };
+  const handleRedactirovatClick = (index) => {
+    const updatedCardData = [...cardData];
+    updatedCardData[index].isEditing = !updatedCardData[index].isEditing;
+    setCardData(updatedCardData);
+  };
+  const handleDeleteClick = (index) => {
+    setCardData((prevCardData) => {
+      const updatedCardData = [...prevCardData];
+      updatedCardData.splice(index, 1); // Remove the card at the specified index
+      return updatedCardData;
+    });
+  };
+
+  const handleAdd1Click = () => {
+    const newCard = {
+      isEditing: true, // Set isEditing to true for the newly added card
+      balance: "",
+      fio: "",
+      num999: "",
+    };
+  
+    setCardData((prevCardData) => [newCard, ...prevCardData]);
+    setCardCount(cardCount + 1);
   };
   return (
     <View style={styles.frame26}>
@@ -38,17 +72,49 @@ const Client = ({ navigation }) => {
             <View style={styles.pngwing14} />
             <View style={styles.pngwing15} />
             <View style={styles.rectangle26} />
-            <View style={styles.rectangle37} />
-
-          
-       
-            <Text style={styles.balance}>
-             Р
-            </Text>
-   
-            <Text style={styles.num999}>№</Text>
+            {/* <View style={styles.rectangle37} /> */}
            
-          
+            <View style={styles.cardForContainer}>
+  <ScrollView style={styles.cardScrollView} contentContainerStyle={styles.cardScrollContainer}>
+    {cardData.map((card, index) => (
+      <Card key={index} containerStyle={styles.cardContainer}>
+        <Text style={styles.balance}>Р</Text>
+        <Text style={styles.num999}>№</Text>
+        <TouchableOpacity onPress={() => handleRedactirovatClick(index)}>
+          <Image
+            style={styles.redactirovat}
+            source={{ uri: "https://i.ibb.co/fvWPsby/image.png" }}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleDeleteClick(index)}>
+              <Image
+                style={styles.delete}
+                source={{ uri: "https://i.ibb.co/SVmDTwG/pngwing-com-8.png" }}
+              />
+            </TouchableOpacity>
+        {card.isEditing ? (
+          <>
+            <TextInput
+              style={styles.inputBalance}
+              onBlur={() => setIsEditing(false)}
+            />
+            <TextInput
+              style={styles.inputFIO}
+              onBlur={() => setIsEditing(false)}
+            />
+            <TextInput
+              style={styles.inputnum999}
+              onBlur={() => setIsEditing(false)}
+            />
+          </>
+        ) : null}
+      </Card>
+    ))}
+  </ScrollView>
+</View>
+
+       
+
             <Image
               style={styles.pngwing19}
               source={{ uri: "https://static.overlay-tech.com/assets/37f29226-098f-4176-95b7-4d2dc6f94c4d.png" }}
@@ -66,7 +132,7 @@ const Client = ({ navigation }) => {
             <Text style={styles.active}>Активные</Text>
          
 
-            <TouchableOpacity style={styles.button} onPress={handleAddClick}>
+            <TouchableOpacity style={styles.button} onPress={handleAdd1Click}>
               <Text style={styles.dobavit}>Добавить</Text>
             </TouchableOpacity>
 
@@ -101,6 +167,97 @@ const Client = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  inputBalance: {
+    height: 40,
+    width: 130,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    left: 10,
+    top: 250,
+  },
+  inputFIO: {
+    height: 40,
+    width: 290,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    left: 15,
+    top: 140,
+  },
+  inputnum999: {
+    height: 40,
+    width: 130,
+    borderWidth: 2, // Толщина рамки
+    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
+    borderRadius: 100, // Закругленные углы рамки
+    borderColor: "black",
+    fontFamily: "Open Sans",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    left: 60,
+    top: 30,
+  },
+ redactirovat: {
+    width: 45,
+    height: 45,
+    position: "absolute",
+    left: 265,
+    top: 10,
+  },
+ delete: {
+    width: 45,
+    height: 45,
+    position: "absolute",
+    left: 265,
+    top: 280,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContainer: {
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  cardForContainer: {
+    width: 400,
+    height: 500,
+    position: 'absolute',
+    left: 0,
+    top: 270,
+  },
+  cardScrollView: {
+    flex: 1,
+  },
+  cardScrollContainer: {
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  cardContainer: {
+    width: 360,
+    height: 380,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 20,
+    borderWidth: 6,
+    borderColor: 'rgba(246, 246, 246, 1)',
+  },
   menuContainer: {
     position: "absolute",
     left: 0,
@@ -110,13 +267,13 @@ const styles = StyleSheet.create({
   },
   num999: {
     height: 36,
-    width: 276,
+    width: 45,
       lineHeight: "normal",
     color: "rgba(30, 30, 30, 1)",
     display: "flex",
     position: "absolute",
-    left: 55,
-    top: 381,
+    left: 5,
+    top: 30,
     fontFamily: "Open Sans",
     fontSize: 36,
     fontWeight: "800",
@@ -134,8 +291,8 @@ const styles = StyleSheet.create({
     color: "rgba(30, 30, 30, 1)",
     display: "flex",
     position: "absolute",
-    left: 245,
-    top: 581,
+    left: 155,
+    top: 250,
   },
   frame26: {
     marginLeft: -3,
