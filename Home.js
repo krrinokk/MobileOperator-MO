@@ -45,7 +45,7 @@ const Home = ({ route, navigation }) => {
         <View style={styles.flexWrapperOne}>
           <View style={styles.rectangle20} />
           <Text style={styles.dobroPozhalovatUser280923}>
-            Добро пожаловать, {login}!
+            Добро пожаловать, operator!
           </Text>
           <Text style={styles.num28Sentjabrja2023God955}>
             {currentDate}

@@ -1,21 +1,61 @@
-import React, { useState } from "react";
+import React, { useState,  useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import moment from "moment";
 import 'moment/locale/ru';
 import Menu from "./Menu";
 import { Card } from 'react-native-elements';
-
+import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const Dogovor = () => {
   const route = useRoute(); // use useRoute hook to get access to route object
+  const [mostPopularTariffText, setMostPopularTariffText] = useState(""); // New state for the most popular tariff text
   const { login } = route.params || {};
   const [cardData, setCardData] = useState([
     {
-      isEditing: false,
-   
+    
     },
   ]);
+
+    const getDogovors = async () => {
+      try {
+        const response = await axios.get("http://172.20.10.9:5050/api/Dogovors");
+        const fetchedCardData = response.data;
+  
+        const mostPopularTariffText = getMostPopularTariff(fetchedCardData);
+        setMostPopularTariffText(mostPopularTariffText);
+        setCardData(fetchedCardData);
+      } catch (error) {
+        console.error('Error fetching data:', error.message);
+      }
+    }
+    useEffect(() => {
+    getDogovors();
+  }, []);
+  const renderCardContent = (договор, index) => (
+    
+    <View>
+      <Text style={styles.num999} >№ {договор.номер_договора}</Text>
+      <Text style={styles.dataZakljuchenija}>
+  {` ${new Date(договор.дата_заключения).toLocaleDateString()} дата заключения`}
+</Text>
+
+<Text style={styles.dataRastorzhenia}>
+  {`${new Date(договор.дата_расторжения).toLocaleDateString()} дата расторжения`}
+</Text>
+
+<TouchableOpacity onPress={() =>  handleDeleteClick(договор.номер_договора, index)}>
+              <Image
+                style={styles.delete}
+                source={{ uri: "https://i.postimg.cc/2y6kh701/pngwing-com-8.png" }}
+              />
+            </TouchableOpacity>
+      <Text style={styles.num77686} >+ {договор.номер_телефона}</Text>
+      <Text style={styles.simCard} >{договор. серийный_номер_сим_карты} - SIM-Card</Text>
+      <Text style={styles.nomerKlienta} >№ {договор.номер_клиента_FK} клиента</Text>
+      <Text style={styles.nomerTarifa} >№ {договор.код_тарифа_FK} тарифа</Text>
+    </View>
+  );
  
   const [cardCount, setCardCount] = useState(1); // State to track the number of cards
   const [isEditing, setIsEditing] = useState(false); // State to track editing mode 
@@ -29,11 +69,9 @@ const navigation = useNavigation();
         navigation.navigate("Dogovor");
       };
       const handleReturnToClient = () => {
-        navigation.navigate("Dogovor");
+        navigation.navigate("Client");
       };
-      const handleOpenAddDogovor = () => {
-        navigation.navigate("AddDogovor"); 
-      };
+
       const handleReturnToHome = () => {
         navigation.navigate("Home", { login });
       };
@@ -42,22 +80,56 @@ const navigation = useNavigation();
         updatedCardData[index].isEditing = !updatedCardData[index].isEditing;
         setCardData(updatedCardData);
       };
-      const handleDeleteClick = (index) => {
-        setCardData((prevCardData) => {
-          const updatedCardData = [...prevCardData];
-          updatedCardData.splice(index, 1); // Remove the card at the specified index
-          return updatedCardData;
-        });
+      const handleDeleteClick = async (номер_договора, index) => {
+        try {
+          const response = await fetch(`http://172.20.10.9:5050/api/dogovors/${номер_договора}`, {
+            method: 'DELETE',
+          });
+    
+          if (response.ok) {
+            console.log('Договор успешно удален на сервере');
+            await getDogovors();
+            setCardData((prevCardData) => {
+              const updatedCardData = [...prevCardData];
+              updatedCardData.splice(index, 1);
+              return updatedCardData;
+            });
+          } else {
+            console.error('Ошибка при удалении договора на сервере:', response.status);
+          }
+        } catch (error) {
+          console.error('Ошибка при отправке запроса:', error.message);
+        }
       };
+    
+    
       const handleAddClick = () => {
-        const newCard = {
-          isEditing: true, // Set isEditing to true for the newly added card
-       
-        };
-      
-        setCardData((prevCardData) => [newCard, ...prevCardData]);
-        setCardCount(cardCount + 1);
+        navigation.navigate("AddDogovor");
       };
+      const getMostPopularTariff = (data) => {
+        const tariffMap = new Map();
+        data.forEach(dogovor => {
+          const tariffCode = dogovor.код_тарифа_FK;
+          if (tariffMap.has(tariffCode)) {
+            tariffMap.set(tariffCode, tariffMap.get(tariffCode) + 1);
+          } else {
+            tariffMap.set(tariffCode, 1);
+          }
+        });
+      
+        let maxTariffCode;
+        let maxTariffCount = 0;
+      
+        tariffMap.forEach((count, code) => {
+          if (count > maxTariffCount) {
+            maxTariffCode = code;
+            maxTariffCount = count;
+          }
+        });
+      
+        return `Популярный тариф №${maxTariffCode} \n подключений - ${maxTariffCount}`;
+      };
+      
       
   return (
     <View style={styles.frame26}>
@@ -76,12 +148,7 @@ const navigation = useNavigation();
               Открыть новый тарифный план
             </Text>
             <View style={styles.rectangle25} />
-          
-       
-       
-           
-            
-           
+               
            
             
       <View style={styles.menuContainer}>
@@ -96,75 +163,16 @@ const navigation = useNavigation();
       </View>
       
       <View style={styles.cardForContainer}>
-            <ScrollView style={styles.cardScrollView} contentContainerStyle={styles.cardScrollContainer}>
-            {cardData.map((card, index) => (
-                <Card containerStyle={styles.cardContainer}>
-              <TouchableOpacity onPress={() => handleRedactirovatClick(index)}>
-          <Image
-            style={styles.redactirovat}
-            source={{ uri: "https://ltdfoto.ru/images/2023/11/21/REDAKTIROVAT.png" }}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDeleteClick(index)}>
-              <Image
-                style={styles.delete}
-                source={{ uri: "https://i.ibb.co/SVmDTwG/pngwing-com-8.png" }}
-              />
-            </TouchableOpacity>
-
-<Text style={styles.dataZakljuchenija}>
-              дата заключения
-            </Text>
-            {/* <Text style={styles.num77686}>
-              &#43;7***-***-***
-            </Text> */}
-       
-            <Text style={styles.nomerKlienta}>
-              номер клиента
-            </Text>
-   
-            <Text style={styles.num999}>№</Text>
-            <Text style={styles.simCard}>SIM-Card</Text>
-    
-            <Text style={styles.nomerTarifa}>
-              номер тарифа
-            </Text>
-
-            {card.isEditing ? (
-          
-                  <>
-                  <TextInput
-                    style={styles.inputdataZakljuchenija}
+      <ScrollView style={styles.cardScrollView} contentContainerStyle={styles.cardScrollContainer}>
+                {cardData.map((card, index) => (
+                  <Card key={index} containerStyle={styles.cardContainer}>
+                   {renderCardContent(card)}
              
-                    onBlur={() => setIsEditing(false)}
-                  />
-                  <TextInput
-                    style={styles.inputnum77686}
-                   
-                    onBlur={() => setIsEditing(false)}
-                  />
-                    <TextInput
-                    style={styles.inputnum999}
-                   
-                    onBlur={() => setIsEditing(false)}
-                  />
-                    <TextInput
-                    style={styles.inputnomerTarifa}
-                   
-                    onBlur={() => setIsEditing(false)}
-                  />
-                        <TextInput
-                    style={styles.inputnomerKlienta}
-                   
-                    onBlur={() => setIsEditing(false)}
-                  />
-                      <TextInput
-                    style={styles.inputsimCard}
-                   
-                    onBlur={() => setIsEditing(false)}
-                  />
-         </>
-        ) : null}
+      
+
+
+
+           
       </Card>
         ))}
               </ScrollView>
@@ -173,12 +181,12 @@ const navigation = useNavigation();
          
             <View style={styles.rectangle26} />
             <TouchableOpacity style={styles.dobavit} onPress={handleAddClick}>
-          <Text style={styles.text}>Добавить</Text>
+          <Text style={styles.text}>Заключить договор</Text>
         </TouchableOpacity>
             <View style={styles.clockSolid1} />
             <View style={styles.rectangle26Two} />
             <Text style={styles.populjarnyjTarif}>
-              Популярный тариф
+            {mostPopularTariffText}
             </Text>
           </View>
         </View>
@@ -189,11 +197,11 @@ const navigation = useNavigation();
 };
 const styles = {
   delete: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     position: "absolute",
-    left: 265,
-    top: 380,
+    left: 275,
+    top: 390,
   },
   inputdataZakljuchenija: {
     height: 40,
@@ -292,10 +300,10 @@ const styles = {
     top: 0,
   },
   redactirovat: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     position: "absolute",
-    left: 255,
+    left: 275,
     top: 0,
   },
   scrollView: {
@@ -482,30 +490,43 @@ const styles = {
       top: 301,
     },
     dataZakljuchenija: {
-      height: 36,
-      width: 232,
+      height: 120,
+      width: 302,
       fontFamily: "Open Sans",
-      fontSize: 24,
+      fontSize: 20,
       fontWeight: 600,
       lineHeight: "normal",
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: -30,
-      top: 65,
+      right: 15,
+      top: 70,
+    },
+    dataRastorzhenia: {
+      height: 120,
+      width: 302,
+      fontFamily: "Open Sans",
+      fontSize: 20,
+      fontWeight: 600,
+      lineHeight: "normal",
+      color: "rgba(30, 30, 30, 1)",
+      display: "flex",
+      position: "absolute",
+      right: 10,
+      top: 125,
     },
     num77686: {
       height: 36,
       width: 247,
       fontFamily: "Open Sans",
-      fontSize: 24,
+      fontSize: 28,
       fontWeight: 800,
       lineHeight: "normal",
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      left: 33,
-      top: 296,
+      left: 43,
+      top: 173,
     },
     num34: {
       height: 36,
@@ -530,8 +551,8 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: -33,
-      top: 185,
+      right: 60,
+      top: 235,
     },
     num77634349: {
       height: 36,
@@ -544,7 +565,7 @@ const styles = {
       display: "flex",
       position: "absolute",
       left: 43,
-      bottom: 318,
+      bottom: 310,
     },
     num021023: {
       height: 36,
@@ -561,7 +582,7 @@ const styles = {
     },
     num999: {
       height: 36,
-      width: 46,
+      width: 130,
       fontFamily: "Open Sans",
       fontSize: 36,
       fontWeight: 800,
@@ -570,7 +591,7 @@ const styles = {
       display: "flex",
       position: "absolute",
       left: 10,
-      top: 0,
+      top: 10,
     },
     vector: {
       width: "10%",
@@ -651,8 +672,8 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: -60,
-      top: 260,
+      right: 60,
+      top: 290,
     },
     num34Two: {
       height: 36,
@@ -677,17 +698,17 @@ const styles = {
       color: "rgba(30, 30, 30, 1)",
       display: "flex",
       position: "absolute",
-      right: -30,
-      top: 330,
+      right: 60,
+      top: 355,
     },
     rectangle26: {
       width: 33,
       height: 31,
-      backgroundColor: "rgba(241, 241, 241, 1)",
+      backgroundColor: "rgba(111, 75, 204, 1)",
       borderRadius: 40,
       position: "absolute",
       left: 30,
-      top: 196,
+      top: 215,
     },
     dobavit: {
       height: 36,
@@ -700,13 +721,13 @@ const styles = {
       display: "flex",
       position: "absolute",
       right: 71,
-      top: 200,
+      top: 216,
     },
     text: {
         height: 36,
         width: 276,
         fontFamily: "Open Sans",
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 800,
         lineHeight: "normal",
         color: "rgba(30, 30, 30, 1)",
@@ -724,17 +745,17 @@ const styles = {
     rectangle26Two: {
       width: 33,
       height: 31,
-      backgroundColor: "rgba(241, 241, 241, 1)",
+      backgroundColor: "rgba(111, 75, 204, 1)",
       borderRadius: 40,
       position: "absolute",
       left: 30,
-      top: 132,
+      top: 136,
     },
     populjarnyjTarif: {
-      height: 36,
+      height: 50,
       width: 276,
       fontFamily: "Open Sans",
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: 800,
       lineHeight: "normal",
       color: "rgba(30, 30, 30, 1)",

@@ -1,24 +1,62 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { useNavigation } from '@react-navigation/native'; // Import the necessary functions from React Navigation
-const AddClient = () => {
-    const [FIO, setFIO] = useState(""); 
-    const [nomerClienta, setnomerClienta] = useState("");
-    const [balance, setBalance] = useState("");
-    
-    const navigation = useNavigation(); 
+import { useNavigation } from '@react-navigation/native';
 
-    const goBackToClient = () => {
-      navigation.navigate('Client'); 
+const AddClient = ({ addКлиент }) => {
+
+  const [номер_клиента, setНомерКлиента] = useState(""); // состояние номера клиента
+  const [баланс, setБаланс] = useState(""); // состояние баланса клиента
+  const [фио, setФИО] = useState(""); // состояние ФИО клиента
+  const navigation = useNavigation();
+
+  const goBackToClient = () => {
+    navigation.navigate('Client');
+  };
+
+  const handleAddClick = async () => {
+    const Клиент = {
+      номер_клиента,
+      баланс,
+      фио,
     };
+  
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Клиент),
+    };
+  
+    try {
+      const response = await fetch("http://172.20.10.9:5050/api/клиентs/", requestOptions);
+  
+      if (!response.ok) {
+        // Check for an error status and handle it
+        console.error('Ошибка при добавлении клиента на сервер:', response.status);
+        const errorText = await response.text();
+        console.log('Error response text:', errorText);
+        return;
+      }
+  
+      const data = await response.json();
+  
+      console.log(data);
+  
+      // If response is successful, call addКлиент function
+      addКлиент(data);
+    } catch (error) {
+      // Handle general errors
+      console.error('Ошибка при отправке запроса:', error);
+    }
+  };
+  
     return (
         <View>
 
           <View style={styles.flexWrapperOne}>
-            <View style={styles.rectangle15} />
+          
             <View style={styles.rectangle11} />
             <View style={styles.rectangle20} />
-            <View style={styles.rectangle21} />
+          
             <Text style={styles.tarifnyePlany}>КЛИЕНТСКАЯ БАЗА</Text>
             <View style={styles.rectangle15Two} />
             <Image
@@ -28,102 +66,45 @@ const AddClient = () => {
               }}
               style={styles.vector}
             />
-            <Image
-              source={{
-                uri:
-                  "https://static.overlay-tech.com/assets/e6042b06-df73-4e68-bb54-a3eb255f4ac2.svg",
-              }}
-              style={styles.vectorTwo}
-            />
-            <View style={styles.folderOpenSolid1}>
-              <Image
-                source={{
-                  uri:
-                    "https://static.overlay-tech.com/assets/093ad885-a4b3-4cb0-b96f-c4acb71bbdcc.svg",
-                }}
-                style={styles.vectorThree}
-              />
-            </View>
-            <Image
-              source={{
-                uri:
-                  "https://static.overlay-tech.com/assets/0d90833f-eb8c-41bf-8bbb-b8f00168b67e.svg",
-              }}
-              style={styles.vectorFour}
-            />
-            <View style={styles.rectangle37} />
-            <View style={styles.rectangle38} />
-            <View style={styles.rectangle39} />
-            <View style={styles.rectangle40} />
-            <View style={styles.rectangle41} />
-            <View style={styles.rectangle42} />
-            <Text style={styles.dogovoraTwo}>Договора</Text>
-            <Text style={styles.tarify}>Тарифы</Text>
-            <View style={styles.rectangle31} />
-            <Text style={styles.dobavlenieClienta}>Добавление клиента</Text>
-            <View style={styles.rectangle32} />
-            <Text style={styles.podkljuchit}>Добавить</Text>
-            <View style={styles.rectangleNazad} />
-
-            <TouchableOpacity onPress={goBackToClient}>
-            <Text style={styles.nazad}>Назад</Text>
-            </TouchableOpacity>
            
-            <Image
-              source={{
-                uri:
-                  "https://static.overlay-tech.com/assets/127f3bb0-cd43-44d3-b894-d8f244a2256b.svg",
-              }}
-              style={styles.vectorFive}
-            />
-            <Image
-              source={{
-                uri:
-                  "https://static.overlay-tech.com/assets/9c4f553b-d2a6-4c87-a2ea-65c3d8e167b0.svg",
-              }}
-              style={styles.vectorSix}
-            />
-            <View style={styles.folderOpenSolid1Two}>
-              <Image
-                source={{
-                  uri:
-                    "https://static.overlay-tech.com/assets/b091bbc0-4a4c-41f2-913e-de845d183330.svg",
-                }}
-                style={styles.vectorThree}
-              />
-            </View>
-            <View style={styles.fileContractSolid1}>
-              <Image
-                source={{
-                  uri:
-                    "https://static.overlay-tech.com/assets/3827740a-5b1d-4612-9591-39539f436507.svg",
-                }}
-                style={styles.vectorSeven}
-              />
-            </View>
+      
+
+           <View style={styles.rectangle32} />
+
+<TouchableOpacity onPress={handleAddClick}>
+<Text style={styles.podkljuchit}>Добавить</Text>
+</TouchableOpacity>
+
          
-        <TextInput
-          style={styles.FIO_input}
+           <View style={styles.rectangleNazad} />
 
-          value={FIO}
-          onChangeText={(text) => setFIO(text)}
-        />
-    
-          <TextInput
-          style={styles.input_nomerClienta}
+<TouchableOpacity onPress={goBackToClient}>
+<Text style={styles.nazad}>Назад</Text>
+</TouchableOpacity>
+            
+            <Text style={styles.dobavlenieClienta}>Добавление клиента</Text>
+         
        
-          value={nomerClienta}
-          onChangeText={(text) => setnomerClienta(text)}
-        />
-
-    
-        <TextInput
-          style={styles.input_balance}
-       
-          value={balance}
-          onChangeText={(text) => setbalance(text)}
-        />
-
+          
+        
+         
+            <TextInput
+  style={styles.input_balance}
+  value={баланс}
+  onChangeText={(text) => setБаланс(text)}
+  keyboardType="numeric"
+/>
+<TextInput
+  style={styles.input_FIO}
+  value={фио}
+  onChangeText={(text) => setФИО(text)}
+/>
+<TextInput
+  style={styles.input_nomerClienta}
+  value={номер_клиента}
+  onChangeText={(text) => setНомерКлиента(text)}
+  keyboardType="numeric"
+/>
 
      
 
@@ -136,6 +117,7 @@ const AddClient = () => {
     };
 
             const styles = StyleSheet.create({
+             
                
                     input_balance: {
                       height: 33,
@@ -405,7 +387,7 @@ const AddClient = () => {
                     borderRadius: 20,
                     position: "absolute",
                     right: 102,
-                    bottom: 335,
+                    bottom: 765,
                   },
                   podkljuchit: {
                     height: 36,
@@ -417,7 +399,7 @@ const AddClient = () => {
                     display: "flex",
                     position: "absolute",
                     right: 83,
-                    bottom: 335,
+                    bottom: 765,
                   },
                   rectangleNazad: {
                     width: 190,
@@ -437,8 +419,8 @@ const AddClient = () => {
                     color: "rgba(255, 255, 255, 1)",
                     display: "flex",
                     position: "absolute",
-                    right: 145,
-                    bottom: 135,
+                    right: 140,
+                    bottom: 150,
                   },
                   vectorFive: {
                     width: "8.55%",

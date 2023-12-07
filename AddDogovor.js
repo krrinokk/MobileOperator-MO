@@ -3,19 +3,70 @@ import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "reac
 import { useNavigation } from '@react-navigation/native'; // Import the necessary functions from React Navigation
 
 
+const AddDogovor = ({ addDogovor }) => {
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(today.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const [номер_договора, setномер_договора] = useState(""); // состояние номера клиента
+  const [  номер_телефона, setномер_телефона] = useState("");
+
+  const [ серийный_номер_сим_карты, setсерийный_номер_сим_карты] = useState(""); 
+  const [дата_заключения, setдата_заключения] = useState(getTodayDate());
+  const [ дата_расторжения, setдата_расторжения] = useState(getTodayDate(1));
+  const [ код_тарифа_FK, setкод_тарифа_FK] = useState("");
+  const [ номер_клиента_FK, setномер_клиента_FK] = useState("");
+
+  const navigation = useNavigation();
 
 
-
-const Frame6 = () => {
-  const [tariffName, setTariffName] = useState(""); 
-  const [minutesBetweenCities, setMinutesBetweenCities] = useState("");
-  const [minutesInRoaming, setMinutesInRoaming] = useState("");
-  const [monthlyFee, setMonthlyFee] = useState("");
-  const [gigabytes, setGigabytes] = useState("");
-  const [nomerDogovora, setnomerDogovora] = useState("");
-  const navigation = useNavigation(); 
   const goBackToDogovor = () => {
-    navigation.navigate('Dogovor'); 
+    navigation.navigate('Dogovor');
+  };
+
+  const handleAddClick = async () => {
+    const Dogovor = {
+      номер_договора,
+      номер_телефона,
+      серийный_номер_сим_карты,
+      дата_заключения,
+      дата_расторжения,
+      код_тарифа_FK,
+      номер_клиента_FK,
+    };
+  
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Dogovor),
+    };
+  
+    try {
+      const response = await fetch("http://172.20.10.9:5050/api/dogovors/", requestOptions);
+  
+      if (!response.ok) {
+        // Check for an error status and handle it
+        console.error('Ошибка при добавлении договора на сервер:', response.status);
+        const errorText = await response.text();
+        console.log('Error response text:', errorText);
+        return;
+      }
+  
+      const data = await response.json();
+  
+      console.log(data);
+  
+
+      addDogovor(data);
+    } catch (error) {
+      // Handle general errors
+      console.error('Ошибка при отправке запроса:', error);
+    }
   };
     return (
         <View>
@@ -68,7 +119,9 @@ const Frame6 = () => {
             <View style={styles.rectangle31} />
             <Text style={styles.dobavlenieTarifa}>Открытие договора</Text>
             <View style={styles.rectangle32} />
-            <Text style={styles.podkljuchit}>Подключить</Text>
+            <TouchableOpacity onPress={handleAddClick}>
+<Text style={styles.podkljuchit}>Подключить</Text>
+</TouchableOpacity>
             <View style={styles.rectangleNazad} />
 
             <TouchableOpacity onPress={goBackToDogovor}>
@@ -110,56 +163,55 @@ const Frame6 = () => {
          
             <TextInput
           style={styles.input_nomerDogovora}
-       
-          value={nomerDogovora}
-          onChangeText={(text) => setnomerDogovora(text)}
+          keyboardType="numeric"
+          value={номер_договора}
+          onChangeText={(text) => setномер_договора(text)}
         />
       
-          {/* За минуту между городами */}
+      
           <TextInput
-          style={styles.input_minutesTown}
+          style={styles.input_nomerKlienta}
+          keyboardType="numeric"
+          value={номер_клиента_FK}
+          onChangeText={(text) => setномер_клиента_FK(text)}
+        />
+
+      
+        <TextInput
+          style={styles.input_nomerTelefona}
+          keyboardType="numeric"
+          value={номер_телефона}
+          onChangeText={(text) => setномер_телефона(text)}
+        />
+
+     
+        <TextInput
+          style={styles.input_simCard}
        
-          value={minutesBetweenCities}
-          onChangeText={(text) => setMinutesBetweenCities(text)}
+          value={серийный_номер_сим_карты}
+          onChangeText={(text) => setсерийный_номер_сим_карты(text)}
         />
 
-        {/* За минуту в роуминге */}
         <TextInput
-          style={styles.input_minutesInRoaming}
-       
-          value={minutesInRoaming}
-          onChangeText={(text) => setMinutesInRoaming(text)}
-        />
-
-        {/* За ежемесячную плату */}
-        <TextInput
-          style={styles.input_monthlyFee}
-        
-          value={monthlyFee}
-          onChangeText={(text) => setMonthlyFee(text)}
-        />
-
-        {/* Гигабайт */}
-        <TextInput
-          style={styles.input_gigabytes}
-         
-          value={gigabytes}
-          onChangeText={(text) => setGigabytes(text)}
+          style={styles.input_kodTarifa}
+          keyboardType="numeric"
+          value={код_тарифа_FK}
+          onChangeText={(text) => setкод_тарифа_FK(text)}
         />
  <Text style={styles.nomerDogovora}>номер договора</Text>
-            <Text style={styles.zaMinutuMezhduGorodami}>дата заключения</Text>
-            <Text style={styles.zaMinutuVRouminge}>номер телефона</Text>
-            <Text style={styles.zaEzhemesjachnujuPlatu}>
+            <Text style={styles.nomerKlienta}>номер клиента</Text>
+            <Text style={styles.nomerTelefona}>номер телефона</Text>
+            <Text style={styles.simCard}>
            номер SIM-Card
             </Text>
-            <Text style={styles.gigabajt}>номер тарифа</Text>
+            <Text style={styles.nomerTarifa}>номер тарифа</Text>
           </View>
         </View>
       );
     };
 
             const styles = StyleSheet.create({
-                input_gigabytes: {
+                input_kodTarifa: {
                   height: 33,
                   width: 100,
                   borderWidth: 2, // Толщина рамки
@@ -190,7 +242,7 @@ const Frame6 = () => {
                     right: 270,
                     top: 243,
                     },
-                  input_monthlyFee: {
+                  input_simCard: {
                     height: 33,
                     width: 100,
                     borderWidth: 2, // Толщина рамки
@@ -206,7 +258,7 @@ const Frame6 = () => {
                     right: 270,
                     bottom: 431,
                     },
-                    input_minutesInRoaming: {
+                    input_nomerTelefona: {
                       height: 33,
                       width: 100,
                       borderWidth: 2, // Толщина рамки
@@ -222,7 +274,7 @@ const Frame6 = () => {
                       right: 270,
                       top: 390,
                       },
-                      input_minutesTown: {
+                      input_nomerKlienta: {
                         height: 33,
                         width: 100,
                         borderWidth: 2, // Толщина рамки
@@ -475,7 +527,7 @@ const Frame6 = () => {
                     borderRadius: 20,
                     position: "absolute",
                     right: 102,
-                    bottom: 245,
+                    bottom: 775,
                   },
                   podkljuchit: {
                     height: 36,
@@ -487,7 +539,7 @@ const Frame6 = () => {
                     display: "flex",
                     position: "absolute",
                     right: 102,
-                    bottom: 245,
+                    bottom: 775,
                   },
                   rectangleNazad: {
                     width: 190,
@@ -617,7 +669,7 @@ const Frame6 = () => {
                     right: 20,
                     top: 243,
                   },
-                  zaMinutuMezhduGorodami: {
+                  nomerKlienta: {
                     height: 360,
                     width: 235,
                     fontFamily: "Open Sans",
@@ -629,7 +681,7 @@ const Frame6 = () => {
                     right: 20,
                     top: 308,
                   },
-                  zaMinutuVRouminge: {
+                  nomerTelefona: {
                     height: 360,
                     width: 235,
                     fontFamily: "Open Sans",
@@ -641,7 +693,7 @@ const Frame6 = () => {
                     right: 20,
                     top: 392,
                   },
-                  zaEzhemesjachnujuPlatu: {
+                  simCard: {
                     height: 36,
                     width: 235,
                     fontFamily: "Open Sans",
@@ -653,7 +705,7 @@ const Frame6 = () => {
                     right: 20,
                     bottom: 426,
                   },
-                  gigabajt: {
+                  nomerTarifa: {
                     height: 33,
                     width: 235,
                     fontFamily: "Open Sans",
@@ -667,4 +719,4 @@ const Frame6 = () => {
                   },
                 });
 
-export default Frame6;
+export default AddDogovor;

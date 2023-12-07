@@ -1,62 +1,248 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import moment from "moment";
 import 'moment/locale/ru';
-import Menu from "./Menu";
 import { Card } from 'react-native-elements';
-
+import Menu from './Menu'
+import axios from 'axios';
 moment.locale('ru');
 const currentDate = moment().format("DD MMMM YYYY [год], H:mm");
 
-const Client = ({ navigation }) => {
-  const [cardData, setCardData] = useState([
-    {
-      isEditing: false,
+const Client = ({ navigation, setКлиентs, }) => {
+  const [cardData, setCardData] = useState([]);
+  const [originalCardData, setOriginalCardData] = useState([]);
+  const existingCard = {
+    isEditing: true,
+    баланс: '',
+    фио: '',
+    номер_клиента: '',
+  };
+  const [filterStatus, setFilterStatus] = useState('Активные'); // Добавлено состояние для фильтрации
 
-    },
-  ]);
-  const [isEditing, setIsEditing] = useState(false); // State to track editing mode 
-  const [cardCount, setCardCount] = useState(1); // State to track the number of cards
+  const filteredКлиентs = cardData.filter((клиент) => {
+    if (filterStatus === 'Активные') {
+      return клиент.баланс > 0;
+    } else if (filterStatus === 'Неактивные') {
+      return клиент.баланс <= 0;
+    }
+    return false;
+  });
+  //Функция поиска тарифа по названию
+  const searchКлиент = (value) => {
+    const lowercaseValue = value.toLowerCase();
+    if (lowercaseValue === '') {
+      setCardData(originalCardData); // Reset to original data when input is empty
+    } else {
+      const filteredData = originalCardData.filter(
+        (клиент) => клиент.фио.toLowerCase().includes(lowercaseValue)
+      );
+      setCardData(filteredData);
+    }
+  };
+  
+  useEffect(() => {
+    const getКлиентs = async () => {
+      try {
+        const response = await axios.get("http://172.20.10.9:5050/api/Клиентs");
+        setCardData(response.data);
+        setOriginalCardData(response.data); // Save the original data
+      } catch (error) {
+        console.error('Error fetching data:', error.message);
+      }
+    }
+
+    getКлиентs();
+  }, []);
 
   const handleReturnToTarif = () => {
     navigation.navigate("Tarif");
   };
+
   const handleReturnToDogovor = () => {
     navigation.navigate("Dogovor");
   };
-  const handleAddClick = () => {
-    navigation.navigate("AddClient");
-  };
+
   const handleReturnToClient = () => {
     navigation.navigate("Client");
   };
+
   const handleReturnToFrame2 = () => {
     navigation.navigate("Frame2");
   };
-  const handleRedactirovatClick = (index) => {
-    const updatedCardData = [...cardData];
-    updatedCardData[index].isEditing = !updatedCardData[index].isEditing;
-    setCardData(updatedCardData);
-  };
-  const handleDeleteClick = (index) => {
-    setCardData((prevCardData) => {
-      const updatedCardData = [...prevCardData];
-      updatedCardData.splice(index, 1); // Remove the card at the specified index
-      return updatedCardData;
-    });
+
+  const  handleAddClick = () => {
+    navigation.navigate("AddClient");
   };
 
-  const handleAdd1Click = () => {
+
+  const handleRedactirovatClick = async (номер_клиента, index) => {
+    try {
+      const клиент = cardData[index];
+  
+    
+      const response = await fetch(`http://172.20.10.9:5050/api/клиентs/${номер_клиента}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache', // Add this header to prevent caching
+  },
+  body: JSON.stringify({
+    баланс: клиент.баланс,
+    фио: клиент.фио,
+    номер_клиента: клиент.номер_клиента,
+    // Include other fields as needed
+  }),
+});
+
+if (response.ok) {
+  console.log('Клиент успешно обновлен на сервере');
+  // Refresh data from the server
+} else {
+  console.error('Ошибка при обновлении клиента на сервере:', response.status);
+}
+
+  
+      // Toggle isEditing property
+      setCardData((prevCardData) => {
+        const updatedCardData = [...prevCardData];
+        updatedCardData[index].isEditing = !клиент.isEditing;
+        return updatedCardData;
+      });
+    } catch (error) {
+      console.error('Ошибка при отправке запроса:', error.message);
+    }
+  };
+  
+  
+  
+
+  const handleDeleteClick = async (номер_клиента, index) => {
+    try {
+      const response = await fetch(`http://172.20.10.9:5050/api/клиентs/${номер_клиента}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        console.log('Клиент успешно удален на сервере');
+        await getКлиентs();
+        setCardData((prevCardData) => {
+          const updatedCardData = [...prevCardData];
+          updatedCardData.splice(index, 1);
+          return updatedCardData;
+        });
+      } else {
+        console.error('Ошибка при удалении клиента на сервере:', response.status);
+      }
+    } catch (error) {
+      console.error('Ошибка при отправке запроса:', error.message);
+    }
+  };
+
+
+  const handleAdd1Click = async () => {
+    // Check if the first card is already in editing mode
+    if (cardData.length > 0 && cardData[0].isEditing) {
+      // Send request to save data
+      const newCard = cardData[0];
+  
+      try {
+        const response = await fetch('http://172.20.10.9:5050/api/клиентs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newCard),
+        });
+  
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log('Клиент успешно добавлен на сервере:', responseData);
+          // Refresh data from the server
+          await getКлиентs();
+        } else {
+          console.error('Ошибка при добавлении клиента на сервер:', response.status);
+        }
+      } catch (error) {
+        console.error('Ошибка при отправке запроса:', error.message);
+      }
+    }
+  
+    // Add a new card with input fields to the state at the beginning
     const newCard = {
-      isEditing: true, // Set isEditing to true for the newly added card
-      balance: "",
-      fio: "",
-      num999: "",
+      баланс: '', // Empty or default value for баланс
+      фио: '', // Empty or default value for фио
+      номер_клиента: '', // Empty or default value for номер_клиента
     };
   
+    // Display the new card at the top
     setCardData((prevCardData) => [newCard, ...prevCardData]);
-    setCardCount(cardCount + 1);
   };
+  
+
+
+
+
+  const renderCardContent = (клиент, index) => (
+    <View>
+        
+  
+          <TouchableOpacity onPress={() => handleDeleteClick(клиент.номер_клиента, index)}>
+            <Image
+              style={styles.delete}
+              source={{ uri: 'https://i.postimg.cc/2y6kh701/pngwing-com-8.png' }}
+            />
+          </TouchableOpacity>
+      {клиент.isEditing ? (
+        <>
+         <TextInput
+  style={styles.inputBalance}
+  onChangeText={(text) => {
+    setCardData((prevCardData) => {
+      const updatedCardData = [...prevCardData];
+      updatedCardData[index].баланс = text;
+      return updatedCardData;
+    });
+  }}
+  value={клиент.баланс}
+  keyboardType="numeric"
+/>
+<TextInput
+  style={styles.inputFIO}
+  onChangeText={(text) => {
+    setCardData((prevCardData) => {
+      const updatedCardData = [...prevCardData];
+      updatedCardData[index].фио = text;
+      return updatedCardData;
+    });
+  }}
+  value={клиент.фио}
+/>
+<TextInput
+  style={styles.inputnum999}
+  onChangeText={(text) => {
+    setCardData((prevCardData) => {
+      const updatedCardData = [...prevCardData];
+      updatedCardData[index].номер_клиента = text;
+      return updatedCardData;
+    });
+  }}
+  value={клиент.номер_клиента}
+  keyboardType="numeric"
+/>
+        </>
+      ) : (
+        <>
+          <Text style={styles.num999}>№ {клиент.номер_клиента}</Text>
+          <Text style={styles.balance}>{клиент.баланс} Р</Text>
+          <Text style={styles.fio}>{клиент.фио}</Text>
+  
+        
+        </>
+      )}
+    </View>
+  );
+  
+  
   return (
     <View style={styles.frame26}>
       <View style={styles.frame3}>
@@ -72,48 +258,22 @@ const Client = ({ navigation }) => {
             <View style={styles.pngwing14} />
             <View style={styles.pngwing15} />
             <View style={styles.rectangle26} />
-            {/* <View style={styles.rectangle37} /> */}
-           
+            <Text style={styles.not_active} onPress={() => setFilterStatus('Неактивные')}>
+        Неактивные
+      </Text>
+      <Text style={styles.active} onPress={() => setFilterStatus('Активные')}>
+        Активные
+      </Text>
             <View style={styles.cardForContainer}>
-  <ScrollView style={styles.cardScrollView} contentContainerStyle={styles.cardScrollContainer}>
-    {cardData.map((card, index) => (
-      <Card key={index} containerStyle={styles.cardContainer}>
-        <Text style={styles.balance}>Р</Text>
-        <Text style={styles.num999}>№</Text>
-        <TouchableOpacity onPress={() => handleRedactirovatClick(index)}>
-          <Image
-            style={styles.redactirovat}
-            source={{ uri: "https://i.ibb.co/fvWPsby/image.png" }}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDeleteClick(index)}>
-              <Image
-                style={styles.delete}
-                source={{ uri: "https://i.ibb.co/SVmDTwG/pngwing-com-8.png" }}
-              />
-            </TouchableOpacity>
-        {card.isEditing ? (
-          <>
-            <TextInput
-              style={styles.inputBalance}
-              onBlur={() => setIsEditing(false)}
-            />
-            <TextInput
-              style={styles.inputFIO}
-              onBlur={() => setIsEditing(false)}
-            />
-            <TextInput
-              style={styles.inputnum999}
-              onBlur={() => setIsEditing(false)}
-            />
-          </>
-        ) : null}
-      </Card>
-    ))}
-  </ScrollView>
-</View>
-
-       
+            <ScrollView style={styles.cardScrollView} contentContainerStyle={styles.cardScrollContainer}>
+  {[...filteredКлиентs, ...cardData.filter((card) => !filteredКлиентs.includes(card))].map((card, index) => (
+    <Card key={index} containerStyle={styles.cardContainer}>
+      {renderCardContent(card, index)}
+      
+    </Card>
+  ))}
+</ScrollView>
+            </View>
 
             <Image
               style={styles.pngwing19}
@@ -128,15 +288,19 @@ const Client = ({ navigation }) => {
               style={styles.image3}
               source={{ uri: "https://static.overlay-tech.com/assets/b515bfad-d66c-478d-8bc1-455b5317afe4.png" }}
             />
-            <Text style={styles.not_active}>Неактивные</Text>
-            <Text style={styles.active}>Активные</Text>
-         
+   
 
-            <TouchableOpacity style={styles.button} onPress={handleAdd1Click}>
+            <TouchableOpacity style={styles.button} onPress={handleAddClick}>
               <Text style={styles.dobavit}>Добавить</Text>
             </TouchableOpacity>
 
-            <Text style={styles.vvediteNazvanieTarifa}>Введите ФИО клиента...</Text>
+            <TextInput
+  style={styles.inputFIO}
+  onChangeText={(text) => {
+    searchКлиент(text);
+  }}
+  placeholder="Введите ФИО клиента..."
+/>
           </View>
         </View>
       </View>
@@ -186,9 +350,7 @@ const styles = StyleSheet.create({
   inputFIO: {
     height: 40,
     width: 290,
-    borderWidth: 2, // Толщина рамки
-    borderColor: 'rgba(20, 10, 10, 10)', // Цвет рамки
-    borderRadius: 100, // Закругленные углы рамки
+ 
     borderColor: "black",
     fontFamily: "Open Sans",
     fontSize: 20,
@@ -196,8 +358,8 @@ const styles = StyleSheet.create({
     color: "rgba(30, 30, 30, 1)",
     display: "flex",
     position: "absolute",
-    left: 15,
-    top: 140,
+    left: 44,
+    top: 120,
   },
   inputnum999: {
     height: 40,
@@ -216,18 +378,18 @@ const styles = StyleSheet.create({
     top: 30,
   },
  redactirovat: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     position: "absolute",
-    left: 265,
+    left: 275,
     top: 10,
   },
  delete: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     position: "absolute",
-    left: 265,
-    top: 280,
+    left: 275,
+    top: 290,
   },
   scrollView: {
     flex: 1,
@@ -267,7 +429,7 @@ const styles = StyleSheet.create({
   },
   num999: {
     height: 36,
-    width: 45,
+    width: 90,
       lineHeight: "normal",
     color: "rgba(30, 30, 30, 1)",
     display: "flex",
@@ -276,6 +438,22 @@ const styles = StyleSheet.create({
     top: 30,
     fontFamily: "Open Sans",
     fontSize: 36,
+    fontWeight: "800",
+    lineHeight: "normal",
+    right: 77,
+    color: "rgba(30, 30, 30, 1)",
+  },
+  fio: {
+    height: 36,
+    width: 300,
+      lineHeight: "normal",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
+    position: "absolute",
+    left: 5,
+    top: 150,
+    fontFamily: "Open Sans",
+    fontSize: 24,
     fontWeight: "800",
     lineHeight: "normal",
     right: 77,
@@ -292,7 +470,7 @@ const styles = StyleSheet.create({
     display: "flex",
     position: "absolute",
     left: 155,
-    top: 250,
+    top: 220,
   },
   frame26: {
     marginLeft: -3,
@@ -424,7 +602,7 @@ const styles = StyleSheet.create({
     top: 132,
   },
   rectangle26: {
-    width: 393,
+    width: 360,
     height: 41,
     backgroundColor: "rgba(241, 241, 241, 1)",
     borderRadius: 40,
@@ -433,10 +611,10 @@ const styles = StyleSheet.create({
     top: 119,
   },
   pngwing19: {
-    width: 34.32,
-    height: 34.32,
+    width: 33,
+    height: 32,
     position: "absolute",
-    right: 98.68,
+    right: 58.68,
     top: 122.68,
   },
   image1: {

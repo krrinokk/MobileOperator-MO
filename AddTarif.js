@@ -1,17 +1,76 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from '@react-navigation/native'; // Import the necessary functions from React Navigation
-const AddTarif = () => {
-    const [tariffName, setTariffName] = useState(""); 
-    const [minutesBetweenCities, setMinutesBetweenCities] = useState("");
-    const [minutesInRoaming, setMinutesInRoaming] = useState("");
-    const [monthlyFee, setMonthlyFee] = useState("");
-    const [gigabytes, setGigabytes] = useState("");
-    const navigation = useNavigation(); // Initialize the navigation hook
 
-    const goBackToTarif = () => {
-      navigation.navigate('Tarif'); // Navigate back to Tarif
+
+const AddTarif = ({ addTarif }) => {
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(today.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
+
+  const [ минута_межгород_стоимость, setминута_межгород_стоимость] = useState("");
+
+  const [ минута_международная_стоимость, setминута_международная_стоимость] = useState(""); 
+  const [ название_тарифа, setназвание_тарифа] = useState("");
+  const [ стоимость_перехода, setстоимость_перехода] = useState("");
+  const [ код_типа_тарифа_FK, setкод_типа_тарифа_FK] = useState("");
+  const [ код_тарифа, setкод_тарифа] = useState("");
+  const [ статус, setстатус] = useState("Locked");
+  const [дата_открытия, setдата_открытия] = useState(getTodayDate()); // Set initial date to today
+  const navigation = useNavigation();
+
+
+  const goBackToTarif = () => {
+    navigation.navigate('Tarif');
+  };
+
+  const handleAddClick = async () => {
+    const Тариф = {
+      минута_межгород_стоимость,
+      минута_международная_стоимость,
+      название_тарифа,
+      стоимость_перехода,
+      код_типа_тарифа_FK,
+      код_тарифа,
+      статус,
+      дата_открытия
     };
+  
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Тариф),
+    };
+  
+    try {
+      const response = await fetch("http://172.20.10.9:5050/api/тарифs/", requestOptions);
+  
+      if (!response.ok) {
+        // Check for an error status and handle it
+        console.error('Ошибка при добавлении тарифа на сервер:', response.status);
+        const errorText = await response.text();
+        console.log('Error response text:', errorText);
+        return;
+      }
+  
+      const data = await response.json();
+  
+      console.log(data);
+  
+
+      addТариф(data);
+    } catch (error) {
+      // Handle general errors
+      console.error('Ошибка при отправке запроса:', error);
+    }
+  };
+
     return (
         <View>
           <Text style={styles.glavnaja}>Главная</Text>
@@ -64,7 +123,10 @@ const AddTarif = () => {
             <View style={styles.rectangle31} />
             <Text style={styles.dobavlenieTarifa}>Добавление тарифа</Text>
             <View style={styles.rectangle32} />
-            <Text style={styles.podkljuchit}>Подключить</Text>
+            <TouchableOpacity onPress={handleAddClick}>
+<Text style={styles.podkljuchit}>Подключить</Text>
+</TouchableOpacity>
+
             <View style={styles.rectangleNazad} />
 
             <TouchableOpacity onPress={goBackToTarif}>
@@ -110,55 +172,92 @@ const AddTarif = () => {
          
         <TextInput
           style={styles.nazvavie_input}
-
-          value={tariffName}
-          onChangeText={(text) => setTariffName(text)}
+          value={название_тарифа}
+          onChangeText={(text) => setназвание_тарифа(text)}
         />
           {/* За минуту между городами */}
           <TextInput
           style={styles.input_minutesTown}
-       
-          value={minutesBetweenCities}
-          onChangeText={(text) => setMinutesBetweenCities(text)}
+          keyboardType="numeric"
+          value={минута_межгород_стоимость}
+          onChangeText={(text) => setминута_межгород_стоимость(text)}
         />
 
         {/* За минуту в роуминге */}
         <TextInput
           style={styles.input_minutesInRoaming}
-       
-          value={minutesInRoaming}
-          onChangeText={(text) => setMinutesInRoaming(text)}
+          keyboardType="numeric"
+          value={минута_международная_стоимость}
+          onChangeText={(text) => setминута_международная_стоимость(text)}
         />
 
         {/* За ежемесячную плату */}
         <TextInput
           style={styles.input_monthlyFee}
-        
-          value={monthlyFee}
-          onChangeText={(text) => setMonthlyFee(text)}
+          keyboardType="numeric"
+          value={стоимость_перехода}
+          onChangeText={(text) => setстоимость_перехода(text)}
         />
 
-        {/* Гигабайт */}
+     
         <TextInput
-          style={styles.input_gigabytes}
-         
-          value={gigabytes}
-          onChangeText={(text) => setGigabytes(text)}
+          style={styles.input_tip_tarifa}
+          keyboardType="numeric"
+          value={  код_типа_тарифа_FK}
+          onChangeText={(text) => setкод_типа_тарифа_FK(text)}
         />
+          <TextInput
+          style={styles.input_kod_tarifa}
+          keyboardType="numeric"
+          value={код_тарифа}
+          onChangeText={(text) => setкод_тарифа(text)}
+        />
+      
+   
 
+     
+           
+   
             <Text style={styles.zaMinutuMezhduGorodami}>за минуту {"\n"} между городами</Text>
             <Text style={styles.zaMinutuVRouminge}>за минуту{"\n"}в роуминге</Text>
             <Text style={styles.zaEzhemesjachnujuPlatu}>
               за ежемесячную плату
             </Text>
-            <Text style={styles.gigabajt}>гигабайт</Text>
+            <Text style={styles.tip_tarifa}>тип тарифа</Text>
+            <Text style={styles.kod_tarifa}>код тарифа</Text>
           </View>
         </View>
       );
     };
 
             const styles = StyleSheet.create({
-                input_gigabytes: {
+              input_status: {
+                fontSize: 16,
+                paddingVertical: 12,
+                paddingHorizontal: 10,
+                borderWidth: 1,
+                borderColor: "gray",
+                borderRadius: 4,
+                color: "black",
+                paddingRight: 30,
+                marginBottom: 10,
+              },
+              input_kod_tarifa : {
+                height: 33,
+                width: 100,
+                borderWidth: 2, // Толщина рамки
+                borderColor: "rgba(111, 75, 204, 1)",
+                borderRadius: 20, // Закругленные углы рамки
+                fontFamily: "Open Sans",
+                fontSize: 20,
+                fontWeight: "800",
+                color: "rgba(30, 30, 30, 1)",
+                display: "flex",
+                position: "absolute",
+                right: 270,
+                bottom: 375,
+                },
+                input_tip_tarifa: {
                   height: 33,
                   width: 100,
                   borderWidth: 2, // Толщина рамки
@@ -171,7 +270,7 @@ const AddTarif = () => {
                   display: "flex",
                   position: "absolute",
                   right: 270,
-                  bottom: 355,
+                  bottom: 317,
                   },
                   input_monthlyFee: {
                     height: 33,
@@ -456,8 +555,8 @@ const AddTarif = () => {
                     backgroundColor: "rgba(111, 75, 204, 1)",
                     borderRadius: 20,
                     position: "absolute",
-                    right: 102,
-                    bottom: 245,
+                    right: 95,
+                    bottom: 775,
                   },
                   podkljuchit: {
                     height: 36,
@@ -468,8 +567,8 @@ const AddTarif = () => {
                     color: "rgba(255, 255, 255, 1)",
                     display: "flex",
                     position: "absolute",
-                    right: 102,
-                    bottom: 245,
+                    right: 95,
+                    bottom: 775,
                   },
                   rectangleNazad: {
                     width: 190,
@@ -623,7 +722,7 @@ const AddTarif = () => {
                     right: 20,
                     bottom: 429,
                   },
-                  gigabajt: {
+                  tip_tarifa: {
                     height: 33,
                     width: 235,
                     fontFamily: "Open Sans",
@@ -633,7 +732,19 @@ const AddTarif = () => {
                     display: "flex",
                     position: "absolute",
                     right: 20,
-                    bottom: 350,
+                    bottom: 315,
+                  },
+                  kod_tarifa : {
+                    height: 33,
+                    width: 235,
+                    fontFamily: "Open Sans",
+                    fontSize: 20,
+                    fontWeight: "800",
+                    color: "rgba(30, 30, 30, 1)",
+                    display: "flex",
+                    position: "absolute",
+                    right: 20,
+                    bottom: 370,
                   },
                 });
 

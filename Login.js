@@ -7,10 +7,17 @@ const Login = ({ navigation }) => {
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    // Обработка входа
-    console.log("Вход с", login, password);
-    // Переход на экран Home
-    navigation.navigate("Home", { login });
+    // Check if the entered username and password are valid
+    if (login === "operator" && password === "12345") {
+      // Valid credentials, navigate to the "Home" screen
+      console.log("Успешный вход!");
+      navigation.navigate("Home", { login });
+    } else {
+      // Invalid credentials, you can display an error message or take other actions
+      console.log("Неправильный логин!");
+      // For example, you can reset the password field
+      setPassword("");
+    }
   };
 
   return (

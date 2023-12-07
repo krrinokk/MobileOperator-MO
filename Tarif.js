@@ -1,20 +1,70 @@
-import React, { useState } from "react";
+import React, { useState,  useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
+
 import moment from "moment";
 import 'moment/locale/ru';
 import Menu from "./Menu";
 import { Card } from 'react-native-elements';
-
+import axios from 'axios';
 moment.locale('ru');
 const currentDate = moment().format("DD MMMM YYYY [год], H:mm");
 
 const Tarif = ({ navigation }) => {
+  const [originalCardData, setOriginalCardData] = useState([]);
   const [cardData, setCardData] = useState([
     {
       isEditing: false,
     
     },
   ]);
+  const [filterStatus, setFilterStatus] = useState('unlocked'); // Добавлено состояние для фильтрации
+  const filteredТарифs = cardData.filter((тариф) => {
+    if (filterStatus === 'all') {
+      return true;
+    } else if (filterStatus === 'locked') {
+      return тариф.статус === 'Locked';
+    } else if (filterStatus === 'unlocked') {
+      return тариф.статус === 'Unlocked';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const getTarifs = async () => {
+      try {
+        const response = await axios.get("http://172.20.10.9:5050/api/Тарифs");
+        setCardData(response.data);
+        setOriginalCardData(response.data); // Save the original data
+      } catch (error) {
+        console.error('Error fetching data:', error.message);
+      }
+    }
+   
+    getTarifs();
+  }, []);
+// Функция поиска тарифа по названию
+const searchТариф = (value) => {
+  const lowercaseValue = value.toLowerCase();
+  if (lowercaseValue === '') {
+    setCardData(originalCardData); // Reset to original data when input is empty
+  } else {
+    const filteredData = originalCardData.filter(
+      (тариф) => тариф.название_тарифа.toLowerCase().includes(lowercaseValue)
+    );
+    setCardData(filteredData);
+  }
+};
+
+  
+  const renderCardContent = (тариф) => (
+    <View>
+      <Text style={styles.num999} >№ {тариф.код_тарифа}</Text>
+      <Text style={styles.bezlimit} > {тариф.название_тарифа}</Text>
+      <Text style={styles.minutaTown}>{тариф.минута_межгород_стоимость} Р за минуту{"\n"}между городами</Text>
+      <Text style={styles.minutaRouming}>{тариф.минута_международная_стоимость} Р за минуту{"\n"}в роуминге</Text>
+           <Text style={styles.Cost}>{тариф.стоимость_перехода} Р/месяц</Text>
+    </View>
+  );
   const [isEditing, setIsEditing] = useState(false); // State to track editing mode 
   const [cardCount, setCardCount] = useState(1); // State to track the number of cards
   const handleReturnToHome = () => {
@@ -34,24 +84,31 @@ const Tarif = ({ navigation }) => {
     updatedCardData[index].isEditing = !updatedCardData[index].isEditing;
     setCardData(updatedCardData);
   };
-  const handleDeleteClick = (index) => {
-    setCardData((prevCardData) => {
-      const updatedCardData = [...prevCardData];
-      updatedCardData.splice(index, 1); // Remove the card at the specified index
-      return updatedCardData;
-    });
+  const handleDeleteClick = async (код_тарифа, index) => {
+    try {
+      const response = await fetch(`http://172.20.10.9:5050/api/тарифs/${код_тарифа}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        console.log('Тариф успешно удален на сервере');
+        await getКлиентs();
+        setCardData((prevCardData) => {
+          const updatedCardData = [...prevCardData];
+          updatedCardData.splice(index, 1);
+          return updatedCardData;
+        });
+      } else {
+        console.error('Ошибка при удалении тарифа на сервере:', response.status);
+      }
+    } catch (error) {
+      console.error('Ошибка при отправке запроса:', error.message);
+    }
   };
 
+
   const handleAdd1Click = () => {
-    const newCard = {
-      isEditing: true, // Set isEditing to true for the newly added card
-      balance: "",
-      fio: "",
-      num999: "",
-    };
-  
-    setCardData((prevCardData) => [newCard, ...prevCardData]);
-    setCardCount(cardCount + 1);
+    navigation.navigate("AddTarif");
   };
   return (
     <View style={styles.frame26}>
@@ -68,7 +125,7 @@ const Tarif = ({ navigation }) => {
             <View style={styles.rectangle25} />
             <View style={styles.pngwing14} />
             <View style={styles.pngwing15} />
-            <View style={styles.rectangle26} />
+            <View style={styles.poisk} />
        
 
 
@@ -85,8 +142,12 @@ const Tarif = ({ navigation }) => {
               style={styles.image3}
               source={{ uri: "https://static.overlay-tech.com/assets/b515bfad-d66c-478d-8bc1-455b5317afe4.png" }}
             />
-            <Text style={styles.arhivnye}>Архивные</Text>
-            <Text style={styles.aktivnye}>Активные</Text>
+             <Text style={styles.arhivnye} onPress={() => setFilterStatus('locked')}>
+       Архивные
+      </Text>
+      <Text style={styles.aktivnye} onPress={() => setFilterStatus('unlocked')}>
+        Активные
+      </Text>
          
 
           
@@ -94,7 +155,13 @@ const Tarif = ({ navigation }) => {
               <Text style={styles.dobavit}>Добавить</Text>
             </TouchableOpacity>
          
-            <Text style={styles.vvediteNazvanieTarifa}>Введите название тарифа...</Text>
+            <TextInput
+  style={styles.vvediteNazvanieTarifa}
+  onChangeText={(text) => {
+    searchТариф(text);
+  }}
+  placeholder="Введите название тарифа..."
+/>
           </View>
         </View>
       </View>
@@ -113,33 +180,25 @@ const Tarif = ({ navigation }) => {
 
       <View style={styles.cardForContainer}>
             <ScrollView style={styles.cardScrollView} contentContainerStyle={styles.cardScrollContainer}>
-            {cardData.map((card, index) => (
-                <Card containerStyle={styles.cardContainer}>
-                <TouchableOpacity onPress={() => handleRedactirovatClick(index)}>
-          <Image
-            style={styles.redactirovat}
-            source={{ uri: "https://ltdfoto.ru/images/2023/11/21/REDAKTIROVAT.png" }}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDeleteClick(index)}>
+          {filteredТарифs.map((card, index) => (
+
+                  <Card key={index} containerStyle={styles.cardContainer}>
+                   {renderCardContent(card)}
+              
+        <TouchableOpacity onPress={() => handleDeleteClick(тариф.код_тарифа, index)}>
               <Image
                 style={styles.delete}
-                source={{ uri: "https://i.ibb.co/SVmDTwG/pngwing-com-8.png" }}
+                source={{ uri: "https://i.postimg.cc/2y6kh701/pngwing-com-8.png" }}
               />
             </TouchableOpacity>
-                <Text style={styles.bezlimit}>
-             безлимит
-            </Text>
-            <Text style={styles.vnutriSeti}>
-            внутри сети
-            </Text>
+               
             <Text style={styles.minutaTown}>
-           за минуту{"\n"}между городами
+          
             </Text>
             <Text style={styles.minutaRouming}>
-           за минуту{"\n"}в роуминге
+          
             </Text>
-            <Text style={styles.Cost}>Р/месяц</Text>
+         
             {card.isEditing ? (
                   <>
                   <TextInput
@@ -185,11 +244,27 @@ const Tarif = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  delete: {
-    width: 45,
-    height: 45,
+  num999: {
+    height: 36,
+    width: 90,
+      lineHeight: "normal",
+    color: "rgba(30, 30, 30, 1)",
+    display: "flex",
     position: "absolute",
-    left: 265,
+    left: 5,
+    top: 0,
+    fontFamily: "Open Sans",
+    fontSize: 36,
+    fontWeight: "800",
+    lineHeight: "normal",
+    right: 77,
+    color: "rgba(30, 30, 30, 1)",
+  },
+  delete: {
+    width: 40,
+    height: 40,
+    position: "absolute",
+    left: 275,
     top: 370,
   },
   inputNumber: {
@@ -257,10 +332,11 @@ const styles = StyleSheet.create({
     top: 351,
   },
   redactirovat: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     position: "absolute",
-    left: 265,
+    left: 275,
+
     top: 0,
   },
   scrollView: {
@@ -294,13 +370,13 @@ const styles = StyleSheet.create({
   },
   Cost: {
     height: 60,
-    width: 170,
+    width: 270,
       lineHeight: "normal",
     color: "rgba(30, 30, 30, 1)",
     display: "flex",
     position: "absolute",
-    left: 100,
-    top: 351,
+    left: 10,
+    top: 331,
     fontFamily: "Open Sans",
     fontSize: 36,
     fontWeight: "800",
@@ -312,7 +388,7 @@ const styles = StyleSheet.create({
     height: 36,
     width: 276,
     fontFamily: "Open Sans",
-    fontSize: 24,
+    fontSize: 33,
     fontWeight: "800",
     lineHeight: "normal",
     color: "rgba(30, 30, 30, 1)",
@@ -495,8 +571,8 @@ const styles = StyleSheet.create({
     right: 107,
     top: 132,
   },
-  rectangle26: {
-    width: 393,
+  poisk: {
+    width: 360,
     height: 41,
     backgroundColor: "rgba(241, 241, 241, 1)",
     borderRadius: 40,
@@ -505,10 +581,10 @@ const styles = StyleSheet.create({
     top: 119,
   },
   pngwing19: {
-    width: 34.32,
-    height: 34.32,
+    width: 33,
+    height: 32,
     position: "absolute",
-    right: 98.68,
+    right: 58.68,
     top: 122.68,
   },
   image1: {
@@ -588,17 +664,18 @@ const styles = StyleSheet.create({
     color: "rgba(30, 30, 30, 1)",
   },
   vvediteNazvanieTarifa: {
-    height: 36,
-    width: 247,
+    height: 40,
+    width: 290,
+ 
+    borderColor: "black",
     fontFamily: "Open Sans",
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: "normal",
-    color: "rgba(143, 133, 133, 1)",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "rgba(30, 30, 30, 1)",
     display: "flex",
     position: "absolute",
     left: 44,
-    top: 130,
+    top: 120,
   },
 });
 
